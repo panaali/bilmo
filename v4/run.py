@@ -1,4 +1,9 @@
+
 # reading options or loading option file
+print('remote version4')
+a = 3
+c = 7
+print('remote version4-2')
 
 # Downloading Datasets
 # Preprocessing the Datasets
