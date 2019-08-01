@@ -37,7 +37,7 @@ def main(gpu: Param("GPU to run on", str) = None):
     random_seed = 0
     min_cpu_per_dataloader = 16
     """## Prepare Dataset"""
-    local_path = '../'
+    local_path = './'
     local_project_path = local_path + 'data/sprot_lm/'
 
     #### Distributed
@@ -65,7 +65,7 @@ def main(gpu: Param("GPU to run on", str) = None):
     processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
                                 include_eos=True), NumericalizeProcessor(max_vocab=30000)]
     df = pickle.load(
-        open('./data/uniprot_sprot/sproat_sequence_taxon_anc.pickle', 'rb'))
+        open('./data/sprot_lm/sproat_sequence_taxon_anc.pickle', 'rb'))
 
     bs = 512
     data_lm = (TextList.from_df(df, path=local_project_path, cols='seq_anc_tax', processor=processor)
