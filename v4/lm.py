@@ -1,7 +1,7 @@
 # from fastai.script import *
 # from fastai.metrics import *
-# from fastai.text import *
-# from fastai import *
+from fastai.text import *
+from fastai import *
 from fastai.distributed import setup_distrib
 from fastai.text import Tokenizer
 from fastai.text.data import TokenizeProcessor, NumericalizeProcessor
@@ -20,11 +20,12 @@ from torch import nn
 data_path = './data/'
 bs = 256
 fp16 = False
+sp_processor = True
 
 class dna_tokenizer(BaseTokenizer):
     def tokenizer(self, t):
         tokens = t.split(' ')
-        before_seq = tokens[:-2]
+        before_seq = tokens[:-2] #bug!! not compatible with new tax anc
         seq = tokens[-2]
         eos = tokens[-1]
         result = before_seq
@@ -69,13 +70,15 @@ def main(gpu: Param("GPU to run on", str) = None):
     df = pickle.load(
         open('./data/sprot_lm/sproat_sequence_taxon_anc.pickle', 'rb'))
 
+    if sp_processor:
+        processor = [OpenFileProcessor(), SPProcessor()]
     data_lm = (TextList.from_df(df, path=local_project_path, cols='seq_anc_tax', processor=processor)
                     .split_by_rand_pct(0.1, seed = random_seed)
                     .label_for_lm()
                     .databunch(bs=bs, num_workers=workers))
 
-    # data_lm.vocab.save(local_project_path +
-    #                    'vocab_lm_sproat_seq_anc_tax.pickle')
+    data_lm.vocab.save(local_project_path +
+                       'vocab_lm_sproat_seq_anc_tax_spprocessor.pickle')
 
     print('data_cls Training set size', len(data_lm.train_ds))
     print('data_cls Validation set size', len(data_lm.valid_ds))
