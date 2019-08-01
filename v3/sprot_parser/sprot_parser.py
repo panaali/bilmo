@@ -15,10 +15,12 @@ def parse():
             print(i)
         list_sp.append(vars(record))
 
-    pickle.dump(list_sp, open( "sproat_parser_list_sp.p", "wb" ) )
+    return list_sp
+#     pickle.dump(list_sp, open( "sproat_parser_list_sp.p", "wb" ) )
     
 def to_df():
-    list_sp = pickle.load(open( "sproat_parser_list_sp.p", "rb" ))
+#     list_sp = pickle.load(open( "sproat_parser_list_sp.p", "rb" ))
+    list_sp = parse()
     print(len(list_sp))
     print('list loaded')
     df = pd.DataFrame(list_sp)
@@ -27,7 +29,6 @@ def to_df():
     pickle.dump(df, open( "sproat_parser_df_sp.p", "wb" ) )
     print('pickle dumped')
     df.to_feather("sproat_parser_feather_sp.p")
-    
     
 if __name__ == '__main__':
     to_df()
