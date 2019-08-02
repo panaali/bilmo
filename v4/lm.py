@@ -12,45 +12,52 @@ from fastai.text.transform import BaseTokenizer
 from fastai.torch_core import num_distrib
 from fastai.core import num_cpus
 from fastai.script import call_parse, Param
+from datetime import datetime
 import pickle
 import numpy as np
 import os
 from torch import nn
 
 data_path = './data/'
-bs = 256
-fp16 = False
-sp_processor = True
 
 class dna_tokenizer(BaseTokenizer):
     def tokenizer(self, t):
         tokens = t.split(' ')
-        before_seq = tokens[:-2] #bug!! not compatible with new tax anc
-        seq = tokens[-2]
+        bos = tokens[0]
+        seq = tokens[1]
+        after_seq = tokens[2:-1]
         eos = tokens[-1]
-        result = before_seq
+        result = [bos]
         result += list(seq)  # sequence string to list
+        result += after_seq
         result.append(eos)
         return result
 
-
 @call_parse
-def main(gpu: Param("GPU to run on", str) = None):
-
+def main(gpu: Param("GPU to run on", str)=None,
+        max_cpu_per_dataloader: Param("Max CPU", int, opt=True)=8,
+        bs: Param("batch size", int)=256,
+        fp16: Param("mixed precision", int, opt=True)=0,
+        sp_processor: Param("use sentence piece as processor", int)=0,
+        sp_model: Param("sentence piece trained model file", str)=None,
+        sp_vocab: Param("sentence piece trained model file", str)=None,
+    ):
+    datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
     random_seed = 0
-    min_cpu_per_dataloader = 16
+    max_vocab = 30000
+    print('max_cpu_per_dataloader', max_cpu_per_dataloader, 'bs', bs,
+        'fp16', fp16, 'sp_processor', sp_processor, 'sp_model', sp_model, 'sp_vocab', sp_vocab)
     """## Prepare Dataset"""
-    local_path = './'
-    local_project_path = local_path + 'data/sprot_lm/'
+    local_project_path = './data/sprot_lm/'
 
     #### Distributed
     print('gpu', gpu)
     gpu = setup_distrib(gpu)
     n_gpus = num_distrib()
     if n_gpus > 0:
-        workers = min(min_cpu_per_dataloader, num_cpus()//n_gpus)
+        workers = min(max_cpu_per_dataloader, num_cpus()//n_gpus)
     else:
-        workers = num_cpus()
+        workers = min(max_cpu_per_dataloader, num_cpus())
     print(gpu, 'n_gpus', n_gpus)
     print(gpu, 'workers', workers)
 
@@ -66,19 +73,19 @@ def main(gpu: Param("GPU to run on", str) = None):
     tokenizer = Tokenizer(tok_func=dna_tokenizer, pre_rules=[],
                         post_rules=[], special_cases=[])
     processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
-                                include_eos=True), NumericalizeProcessor(max_vocab=30000)]
+                                include_eos=True), NumericalizeProcessor(max_vocab=max_vocab)]
     df = pickle.load(
         open('./data/sprot_lm/sproat_sequence_taxon_anc.pickle', 'rb'))
 
-    if sp_processor:
-        processor = [OpenFileProcessor(), SPProcessor()]
+    if sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
+        processor = [OpenFileProcessor(), SPProcessor(sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
     data_lm = (TextList.from_df(df, path=local_project_path, cols='seq_anc_tax', processor=processor)
                     .split_by_rand_pct(0.1, seed = random_seed)
                     .label_for_lm()
                     .databunch(bs=bs, num_workers=workers))
 
     data_lm.vocab.save(local_project_path +
-                       'vocab_lm_sproat_seq_anc_tax_spprocessor.pickle')
+                       'vocab_lm_sproat_seq_anc_tax' + datetime_str + '.pickle')
 
     print('data_cls Training set size', len(data_lm.train_ds))
     print('data_cls Validation set size', len(data_lm.valid_ds))
@@ -89,9 +96,8 @@ def main(gpu: Param("GPU to run on", str) = None):
         data_lm, AWD_LSTM, drop_mult=0.1, pretrained=False)
 
     if gpu is None:
-        # print(gpu, 'DataParallel')
-        # learn_lm.model = nn.DataParallel(learn_lm.model)
-        pass
+        print(gpu, 'DataParallel')
+        learn_lm.model = nn.DataParallel(learn_lm.model)
     else:
         print(gpu, 'to_distributed')
         learn_lm.to_distributed(gpu)
@@ -102,21 +108,21 @@ def main(gpu: Param("GPU to run on", str) = None):
     lr = 3e-3
     print(gpu, 'freeze')
     learn_lm.freeze()
-    learn_lm.fit_one_cycle(1, lr, moms=(0.8, 0.7))
+    learn_lm.fit_one_cycle(1, lr, moms=(0.8, 0.7))  # I don't know why multigpu doesn't work without first freezing
 
     print(gpu, 'unfreeze')
     learn_lm.unfreeze()
     learn_lm.fit_one_cycle(10, lr*10, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-1')
-    learn_lm.save_encoder('lm-sp-ans-v1-1-enc')
+    learn_lm.save('lm-sp-anc-v1-1' + datetime_str)
+    learn_lm.save_encoder('lm-sp-ans-v1-1-enc' + datetime_str)
     
     learn_lm.fit_one_cycle(10, lr, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-2')
-    learn_lm.save_encoder('lm-sp-ans-v1-2-enc')
+    learn_lm.save('lm-sp-anc-v1-2' + datetime_str)
+    learn_lm.save_encoder('lm-sp-ans-v1-2-enc' + datetime_str)
 
     learn_lm.fit_one_cycle(10, lr/10, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-3')
-    learn_lm.save_encoder('lm-sp-ans-v1-3-enc')
+    learn_lm.save('lm-sp-anc-v1-3' + datetime_str)
+    learn_lm.save_encoder('lm-sp-ans-v1-3-enc' + datetime_str)
     print('Done')
 
 # main(None)
