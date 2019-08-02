@@ -85,7 +85,7 @@ def main(gpu: Param("GPU to run on", str)=None,
                     .databunch(bs=bs, num_workers=workers))
 
     data_lm.vocab.save(local_project_path +
-                       'vocab_lm_sproat_seq_anc_tax' + datetime_str + '.pickle')
+                       'vocab_lm_sproat_seq_anc_tax-' + datetime_str + '.pickle')
 
     print('data_cls Training set size', len(data_lm.train_ds))
     print('data_cls Validation set size', len(data_lm.valid_ds))
@@ -113,16 +113,17 @@ def main(gpu: Param("GPU to run on", str)=None,
     print(gpu, 'unfreeze')
     learn_lm.unfreeze()
     learn_lm.fit_one_cycle(10, lr*10, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-1' + datetime_str)
-    learn_lm.save_encoder('lm-sp-ans-v1-1-enc' + datetime_str)
+    learn_lm.save('lm-sp-anc-v1-1-' + datetime_str)
+    learn_lm.save_encoder('lm-sp-ans-v1-1-enc-' + datetime_str)
     
     learn_lm.fit_one_cycle(10, lr, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-2' + datetime_str)
-    learn_lm.save_encoder('lm-sp-ans-v1-2-enc' + datetime_str)
+    learn_lm.save('lm-sp-anc-v1-2-' + datetime_str)
+    learn_lm.save_encoder('lm-sp-ans-v1-2-enc-' + datetime_str)
 
     learn_lm.fit_one_cycle(10, lr/10, moms=(0.8, 0.7))
     learn_lm.save('lm-sp-anc-v1-3' + datetime_str)
-    learn_lm.save_encoder('lm-sp-ans-v1-3-enc' + datetime_str)
+    learn_lm.save_encoder('lm-sp-ans-v1-3-enc-' + datetime_str)
+    learn_lm.export(file = 'export-lm-sp-ans-v1-3' + datetime_str+ '.pkl')
     print('Done')
 
 # main(None)
