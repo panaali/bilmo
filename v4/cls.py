@@ -53,7 +53,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         use_sp_processor: Param("use sentence piece as processor", int)=0,
         sp_model: Param("sentence piece trained model file", str)=None,
         sp_vocab: Param("sentence piece trained vocab file", str)=None,
-        use_lm: Param("use language modeling", int)=1,
+        lm_encoder: Param("language modeling encoder file", str)=None,
         lm_path: Param("lanuage modeling file path", str) = None,
         vocab_path: Param("path to vocab file saved from language modeling", str) = None,
         sequence_col_name: Param("name of the sequence column",
@@ -66,20 +66,21 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
 
 #%%
     # For iPython testing only
-    data_path = '../cafa/data/'
-    max_cpu_per_dataloader = 8
-    bs = 256
-    fp16 = 0
-    use_sp_processor = 0
-    sp_model = None
-    sp_vocab = None
-    gpu = None
-    train_df = data_path + \
-        'cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p'
-    sequence_col_name = 'seq_anc_tax'
-    vocab = data_path + 'sprot_lm/vocab_lm_sproat_seq_anc_tax.pickle'
-    label_col_name = 'selected_go'
-    selected_go = 'GO:0017076'
+    # data_path = '../cafa/data/'
+    # max_cpu_per_dataloader = 8
+    # bs = 256
+    # fp16 = 0
+    # use_sp_processor = 0
+    # sp_model = None
+    # sp_vocab = None
+    # gpu = None
+    # train_df = data_path + \
+    #     'cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p'
+    # sequence_col_name = 'seq_anc_tax'
+    # vocab = data_path + 'sprot_lm/vocab_lm_sproat_seq_anc_tax.pickle'
+    # label_col_name = 'selected_go'
+    # selected_go = 'GO:0017076'
+    # lm_encoder = 'lm-sp-ans-v1-5-enc'
 #%%
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
     random_seed = 0
