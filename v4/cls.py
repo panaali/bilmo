@@ -86,12 +86,13 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
     random_seed = 0
     max_vocab = 30000
-    frame = inspect.currentframe()
-    args, _, _, values = inspect.getargvalues(frame)
-    print 'function name "%s"' % inspect.getframeinfo(frame)[2]
-    for i in args:
-        print "    %s = %s" % (i, values[i])
-    return [(i, values[i]) for i in args]
+#%%
+    if gpu is '0':
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        print('function name "%s"' % inspect.getframeinfo(frame)[2])
+        for i in args:
+            print("    %s = %s" % (i, values[i]))
     """## Prepare Dataset"""
     local_project_path = data_path + 'sprot_lm/'
 #%%
