@@ -15,6 +15,9 @@ import numpy as np
 import os
 from torch import nn
 import pandas as pd
+import inspect
+
+
 """
 Language Modeling
 run :
@@ -83,8 +86,12 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
     random_seed = 0
     max_vocab = 30000
-    print('max_cpu_per_dataloader', max_cpu_per_dataloader, 'bs', bs,
-        'fp16', fp16, 'sp_processor', use_sp_processor, 'sp_model', sp_model, 'sp_vocab', sp_vocab)
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    print 'function name "%s"' % inspect.getframeinfo(frame)[2]
+    for i in args:
+        print "    %s = %s" % (i, values[i])
+    return [(i, values[i]) for i in args]
     """## Prepare Dataset"""
     local_project_path = data_path + 'sprot_lm/'
 #%%
