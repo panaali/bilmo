@@ -64,7 +64,6 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         vocab: Param('vocab file', str) = None,
         benchmarking: Param('benchmarking', int) = 1
     ):
-
 #%%
     # For iPython testing only
     # data_path = '../cafa/data/'
@@ -87,7 +86,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     random_seed = 0
     max_vocab = 30000
 #%%
-    if gpu is '0':
+    if gpu == '0':
         frame = inspect.currentframe()
         args, _, _, values = inspect.getargvalues(frame)
         print('function name "%s"' % inspect.getframeinfo(frame)[2])
@@ -127,7 +126,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
 #%%
     df = df.dropna(subset=['seq_anc_tax'])
     print('total number of rows after removing Nan', len(df))
-    if label_col_name is 'selected_go':
+    if label_col_name == 'selected_go':
         def find_go(row):
             if selected_go in row.go:
                 res = 'T'
