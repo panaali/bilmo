@@ -22,19 +22,19 @@ def parse():
         list_sp.append(vars(record))
 
     return list_sp
-#     pickle.dump(list_sp, open( "sproat_parser_list_sp.p", "wb" ) )
     
 def to_df():
-#     list_sp = pickle.load(open( "sproat_parser_list_sp.p", "rb" ))
     list_sp = parse()
     print(len(list_sp))
     print('list loaded')
     df = pd.DataFrame(list_sp)
     print('df created')
     print(len(df))
-    pickle.dump(df, open( "sproat_parser_df_sp.p", "wb" ) )
+    df['primary_accession'] = df.apply(lambda row: row.accessions[0], axis=1)
+    df = df.set_index('primary_accession')
+
+    pickle.dump(df, open("sprot_2017_01.p", "wb"))
     print('pickle dumped')
-    # df.to_feather("sproat_parser_feather_sp.p")
     
 if __name__ == '__main__':
     to_df()

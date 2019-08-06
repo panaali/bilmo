@@ -75,7 +75,7 @@ def main(gpu: Param("GPU to run on", str)=None,
     processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
                                 include_eos=True), NumericalizeProcessor(max_vocab=max_vocab)]
     df = pickle.load(
-        open('./data/sprot_lm/sproat_sequence_taxon_anc.pickle', 'rb'))
+        open('./data/sprot_lm/sprot_sequence_taxon_anc.pickle', 'rb'))
 
     if sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
         processor = [OpenFileProcessor(), SPProcessor(sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
@@ -85,7 +85,7 @@ def main(gpu: Param("GPU to run on", str)=None,
                     .databunch(bs=bs, num_workers=workers))
 
     data_lm.vocab.save(local_project_path +
-                       'vocab_lm_sproat_seq_anc_tax-' + datetime_str + '.pickle')
+                       'vocab_lm_sprot_seq_anc_tax-' + datetime_str + '.pickle')
 
     print('data_cls Training set size', len(data_lm.train_ds))
     print('data_cls Validation set size', len(data_lm.valid_ds))
