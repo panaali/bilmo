@@ -60,7 +60,8 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
                         str) = 'seq_anc_tax',
         label_col_name: Param('label column name', str) = 'selected_go',
         selected_go: Param('which Go_id for binary classfication')=None,
-        vocab: Param('vocab file', str) = None
+        vocab: Param('vocab file', str) = None,
+        benchmarking: Param('benchmarking', int) = 1
     ):
 
 #%%
@@ -167,12 +168,14 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         if fp16:
             learn_lm.to_fp16()
     
+    
 
     lr = 3e-3
     print(gpu, 'freeze')
     learn_lm.freeze()
     learn_lm.fit_one_cycle(1, lr, moms=(0.8, 0.7))  # I don't know why multigpu doesn't work without first freezing
-
+    if benchmarking:
+        return
     print(gpu, 'unfreeze')
     learn_lm.unfreeze()
     learn_lm.fit_one_cycle(10, lr*10, moms=(0.8, 0.7))
