@@ -54,8 +54,6 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         sp_model: Param("sentence piece trained model file", str)=None,
         sp_vocab: Param("sentence piece trained vocab file", str)=None,
         lm_encoder: Param("language modeling encoder file", str)=None,
-        lm_path: Param("lanuage modeling file path", str) = None,
-        vocab_path: Param("path to vocab file saved from language modeling", str) = None,
         sequence_col_name: Param("name of the sequence column",
                         str) = 'seq_anc_tax',
         label_col_name: Param('label column name', str) = 'selected_go',
@@ -157,40 +155,41 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     print('vocab size ', len(data_cls.vocab.itos))
 
 #%%
-    learn_lm = language_model_learner(
+    learn_cls = language_model_learner(
         data_cls, AWD_LSTM, drop_mult=0.5, pretrained=False)
 
     if gpu is None:
         print(gpu, 'DataParallel')
-        learn_lm.model = nn.DataParallel(learn_lm.model)
+        learn_cls.model = nn.DataParallel(learn_cls.model)
     else:
         print(gpu, 'to_distributed')
-        learn_lm.to_distributed(gpu)
+        learn_cls.to_distributed(gpu)
         if fp16:
-            learn_lm.to_fp16()
-    
+            learn_cls.to_fp16()
+    if lm_encoder is not None:
+        learn_cls.load_enc(lm_encoder)
     
 
     lr = 3e-3
     print(gpu, 'freeze')
-    learn_lm.freeze()
-    learn_lm.fit_one_cycle(1, lr, moms=(0.8, 0.7))  # I don't know why multigpu doesn't work without first freezing
+    learn_cls.freeze()
+    learn_cls.fit_one_cycle(1, lr, moms=(0.8, 0.7))  # I don't know why multigpu doesn't work without first freezing
     if benchmarking:
         return
     print(gpu, 'unfreeze')
-    learn_lm.unfreeze()
-    learn_lm.fit_one_cycle(10, lr*10, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-1-' + datetime_str)
-    learn_lm.save_encoder('lm-sp-ans-v1-1-enc-' + datetime_str)
+    learn_cls.unfreeze()
+    learn_cls.fit_one_cycle(10, lr*10, moms=(0.8, 0.7))
+    learn_cls.save('lm-sp-anc-v1-1-' + datetime_str)
+    learn_cls.save_encoder('lm-sp-ans-v1-1-enc-' + datetime_str)
     
-    learn_lm.fit_one_cycle(10, lr, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-2-' + datetime_str)
-    learn_lm.save_encoder('lm-sp-ans-v1-2-enc-' + datetime_str)
+    learn_cls.fit_one_cycle(10, lr, moms=(0.8, 0.7))
+    learn_cls.save('lm-sp-anc-v1-2-' + datetime_str)
+    learn_cls.save_encoder('lm-sp-ans-v1-2-enc-' + datetime_str)
 
-    learn_lm.fit_one_cycle(10, lr/10, moms=(0.8, 0.7))
-    learn_lm.save('lm-sp-anc-v1-3' + datetime_str)
-    learn_lm.save_encoder('lm-sp-ans-v1-3-enc-' + datetime_str)
-    learn_lm.export(file = 'export-lm-sp-ans-v1-3' + datetime_str+ '.pkl')
+    learn_cls.fit_one_cycle(10, lr/10, moms=(0.8, 0.7))
+    learn_cls.save('lm-sp-anc-v1-3' + datetime_str)
+    learn_cls.save_encoder('lm-sp-ans-v1-3-enc-' + datetime_str)
+    learn_cls.export(file = 'export-lm-sp-ans-v1-3-' + datetime_str+ '.pkl')
     print('Done')
 
 # main(None)
