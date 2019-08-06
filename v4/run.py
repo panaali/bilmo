@@ -42,7 +42,7 @@ Dic to Pandas
 Load Cafa3 train
 Create my train from sprot using evidence list
 
-Combine Cafa3 train with sproat for tax
+Combine Cafa3 train with sprot for tax
 
 load tax and go obo
 expand Cafa3 train with tax_ancesstors and go_ancesstors
