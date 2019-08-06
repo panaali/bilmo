@@ -79,11 +79,12 @@ if __name__ == "__main__":
     obo_go_path = data_path + 'cafa3/Gene Ontology Hirarchy/' + \
         'gene_ontology_edit.obo.2017-02-01'
     sprot_gos_seperated_file = data_path + 'uniprot_sprot/sprot_gos_anc.p'
+    sprot_gos_seperated_slimed_file = data_path + 'uniprot_sprot/sprot_gos_anc_slimed.p'
 #%%
     sprot = pickle.load(open(sprot_pickle_file, 'rb'))
     print('len sprot', len(sprot))
 #%%
-    sprot = sprot.set_index('primary_accession')
+    sprot = sprot.set_index('primary_accessiontel')
 #%%
     sprot['gos_leaf'] = sprot.apply(get_sprot_gos, axis=1)
     sprot['gos_leaf_not_IEA'] = sprot.apply(
@@ -95,6 +96,10 @@ if __name__ == "__main__":
 
 #%%
     pickle.dump(sprot, open(sprot_gos_seperated_file, 'wb'))
-
+    pickle.dump(sprot[['accessions', 'sequence', 'seq_anc_tax', 'gos_leaf', 'gos_leaf_not_IEA',
+                       'gos_leaf_F', 'gos_leaf_P', 'gos_leaf_C', 'gos_leaf_not_IEA_F',
+                       'gos_leaf_not_IEA_P', 'gos_leaf_not_IEA_C', 'gos_anc', 'gos_F_anc',
+                       'gos_P_anc', 'gos_C_anc', 'gos_not_IEA_F_anc', 'gos_not_IEA_P_anc',
+                       'gos_not_IEA_C_anc']], open(sprot_gos_seperated_slimed_file, 'wb'))
 
 #%%
