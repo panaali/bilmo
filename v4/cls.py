@@ -57,7 +57,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         sequence_col_name: Param("name of the sequence column",
                         str) = 'seq_anc_tax',
         label_col_name: Param('label column name', str) = 'selected_go',
-        selected_go: Param('which Go_id for binary classfication')=None,
+        selected_go: Param('which Go_id for binary classfication', str)=None,
         vocab: Param('vocab file', str) = None,
         benchmarking: Param('benchmarking', int) = 1
     ):
