@@ -1,5 +1,3 @@
-# from fastai.script import *
-# from fastai.metrics import *
 from fastai.text import *
 from fastai import *
 from fastai.distributed import setup_distrib
@@ -17,6 +15,19 @@ import pickle
 import numpy as np
 import os
 from torch import nn
+
+"""
+Language Modeling
+run :
+python -m fastai.launch \
+    --gpus=01 v4/lm.py \
+    --max_cpu_per_dataloader=40 \
+    --bs=200 \
+    --fp16=0 \
+    --use_sp_processor=1 \
+    --sp_model=./data/sprot_lm/tmp/spm.model \
+    --sp_vocab=./data/sprot_lm/tmp/spm.vocab \
+"""
 
 data_path = './data/'
 
@@ -38,7 +49,7 @@ def main(gpu: Param("GPU to run on", str)=None,
         max_cpu_per_dataloader: Param("Max CPU", int, opt=True)=8,
         bs: Param("batch size", int)=256,
         fp16: Param("mixed precision", int, opt=True)=0,
-        sp_processor: Param("use sentence piece as processor", int)=0,
+         use_sp_processor: Param("use sentence piece as processor", int) = 0,
         sp_model: Param("sentence piece trained model file", str)=None,
         sp_vocab: Param("sentence piece trained model file", str)=None,
     ):
@@ -46,7 +57,7 @@ def main(gpu: Param("GPU to run on", str)=None,
     random_seed = 0
     max_vocab = 30000
     print('max_cpu_per_dataloader', max_cpu_per_dataloader, 'bs', bs,
-        'fp16', fp16, 'sp_processor', sp_processor, 'sp_model', sp_model, 'sp_vocab', sp_vocab)
+        'fp16', fp16, 'sp_processor', use_sp_processor, 'sp_model', sp_model, 'sp_vocab', sp_vocab)
     """## Prepare Dataset"""
     local_project_path = './data/sprot_lm/'
 
@@ -77,7 +88,7 @@ def main(gpu: Param("GPU to run on", str)=None,
     df = pickle.load(
         open('./data/sprot_lm/sprot_sequence_taxon_anc.pickle', 'rb'))
 
-    if sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
+    if use_sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
         processor = [OpenFileProcessor(), SPProcessor(sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
     data_lm = (TextList.from_df(df, path=local_project_path, cols='seq_anc_tax', processor=processor)
                     .split_by_rand_pct(0.1, seed = random_seed)
