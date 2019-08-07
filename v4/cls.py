@@ -184,10 +184,11 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     print(gpu, 'freeze')
     learn_cls.freeze()
     learn_cls.fit_one_cycle(1, lr, moms=(0.8, 0.7))  # I don't know why multigpu doesn't work without first freezing
-    if benchmarking:
-        return
     print(gpu, 'unfreeze')
     learn_cls.unfreeze()
+    learn_cls.fit_one_cycle(1, lr*10, moms=(0.8, 0.7))
+    if benchmarking:
+        return
     learn_cls.fit_one_cycle(10, lr*10, moms=(0.8, 0.7))
     learn_cls.save('lm-sp-anc-v1-1-' + datetime_str)
     learn_cls.save_encoder('lm-sp-ans-v1-1-enc-' + datetime_str)
