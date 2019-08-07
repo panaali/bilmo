@@ -190,7 +190,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     my_fbeta = FBeta(average='macro')
 #%%
     learn_cls = text_classifier_learner(
-        data_cls, network, drop_mult=0.5, pretrained=False, metrics=[accuracy, my_fbeta])
+        data_cls, eval(network), drop_mult=0.5, pretrained=False, metrics=[accuracy, my_fbeta])
 
     if gpu is None:
         print(gpu, 'DataParallel')
