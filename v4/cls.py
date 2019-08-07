@@ -209,8 +209,11 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     learn_cls.unfreeze()
     learn_cls.fit_one_cycle(4, slice(lr/10/(2.6**4), lr/10), moms=(0.8, 0.7))
     learn_cls.save('cls-v1-3-' + datetime_str)
+
+    learn_cls.fit_one_cycle(20, slice(lr/10/(2.6**4), lr/10), moms=(0.8, 0.7))
+    learn_cls.save('cls-v1-4-' + datetime_str)
     
-    learn_cls.export(file = 'export-cls-v1-3-' + datetime_str+ '.pkl')
+    learn_cls.export(file = 'export-cls-v1-4-' + datetime_str+ '.pkl')
     print('Done')
 
 # main(None)
