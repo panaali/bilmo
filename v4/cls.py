@@ -81,6 +81,11 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     # label_col_name = 'selected_go'
     # selected_go = 'GO:0017076'
     # lm_encoder = 'lm-sp-ans-v1-5-enc'
+    from sklearn.metrics import f1_score
+
+    @np_func
+    def f1(inp, targ):
+        return f1_score(targ, np.argmax(inp, axis=-1))
 #%%
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
     random_seed = 0
@@ -166,7 +171,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
 
 #%%
     learn_cls = text_classifier_learner(
-        data_cls, AWD_LSTM, drop_mult=0.5, pretrained=False)
+        data_cls, AWD_LSTM, drop_mult=0.5, pretrained=False, metrics=[accuracy, f1])
 
     if gpu is None:
         print(gpu, 'DataParallel')
