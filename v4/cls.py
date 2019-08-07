@@ -146,9 +146,11 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         print('len of undersampled train_df', len(df_undersampled))
         
 #%%
+    if vocab is not None:
+        vocab_obj = pickle.load(open(vocab, 'rb'))
     if use_sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
         processor = [OpenFileProcessor(), SPProcessor(sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
-    data_cls = (TextList.from_df(df_undersampled, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab)
+    data_cls = (TextList.from_df(df_undersampled, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab_obj)
                     .split_by_rand_pct(0.1, seed = random_seed)
                     .label_from_df(cols=label_col_name)
                     .databunch(bs=bs, num_workers=workers))
