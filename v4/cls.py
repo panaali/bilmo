@@ -6,7 +6,7 @@ from fastai.text.data import TextList
 from fastai.text.learner import text_classifier_learner
 from fastai.text.models import AWD_LSTM
 from fastai.text.transform import BaseTokenizer
-from fastai.torch_core import num_distrib
+from fastai.torch_core import num_distrib, np_func
 from fastai.core import num_cpus
 from fastai.script import call_parse, Param
 from datetime import datetime
