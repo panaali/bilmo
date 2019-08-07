@@ -155,8 +155,12 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         """## Tokenization"""
         tokenizer = Tokenizer(tok_func=dna_tokenizer, pre_rules=[],
                             post_rules=[], special_cases=[])
+        if vocab is not None:
+            vocab_class_obj = Vocab.load(vocab)
+        else:
+            vocab_class_obj = None
         processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
-                                    include_eos=True), NumericalizeProcessor(vocab=Vocab.load(vocab), max_vocab=max_vocab)]
+                                       include_eos=True), NumericalizeProcessor(vocab=vocab_class_obj, max_vocab=max_vocab)]
     # import pdb; pdb.set_trace()
     data_cls = (TextList.from_df(df_undersampled, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab_obj)
                     .split_by_rand_pct(0.1, seed = random_seed)
