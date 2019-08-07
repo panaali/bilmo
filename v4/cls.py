@@ -177,7 +177,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         if fp16:
             learn_cls.to_fp16()
     if lm_encoder is not None:
-        learn_cls.load_enc(lm_encoder)
+        learn_cls.load_encoder(lm_encoder)
     
 
     lr = 3e-3
