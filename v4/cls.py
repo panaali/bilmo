@@ -3,7 +3,7 @@ from fastai.distributed import setup_distrib
 from fastai.text import Tokenizer
 from fastai.text.data import TokenizeProcessor, NumericalizeProcessor, OpenFileProcessor, SPProcessor
 from fastai.text.data import TextList
-from fastai.text.learner import language_model_learner
+from fastai.text.learner import text_classifier_learner
 from fastai.text.models import AWD_LSTM
 from fastai.text.transform import BaseTokenizer
 from fastai.torch_core import num_distrib
@@ -154,7 +154,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     data_cls.show_batch()
     print('sample x ', data_cls.train_ds.x[0].text)
     print('sample y ', data_cls.train_ds.y[0])
-    
+
 #%%
     if vocab is None:
         data_cls.vocab.save(local_project_path +
@@ -165,7 +165,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     print('vocab size ', len(data_cls.vocab.itos))
 
 #%%
-    learn_cls = language_model_learner(
+    learn_cls = text_classifier_learner(
         data_cls, AWD_LSTM, drop_mult=0.5, pretrained=False)
 
     if gpu is None:
