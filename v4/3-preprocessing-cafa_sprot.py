@@ -93,7 +93,7 @@ if __name__ == "__main__":
     sprot_parser_df = pickle.load(open(sprot_pickle_file, 'rb'))
     print('len sprot_parser_df', len(sprot_parser_df))
 #%%
-    df_cafa_train_seq = get_cafa_train_df(cafa_train_fasta_path)
+    # df_cafa_train_seq = get_cafa_train_df(cafa_train_fasta_path)
 #%%
     df_cafa_train_gos = get_cafa_train_df_gos(cafa_go_path)
     df_cafa_train_gos_seperated = seperate_domains_gos(df_cafa_train_gos)
@@ -112,6 +112,18 @@ if __name__ == "__main__":
                 return None
     df_cafa_train_gos_seperated['seq_anc_tax'] = df_cafa_train_gos_seperated.apply(
         get_seq_anc, axis=1)
+
+    def get_seq(row):
+        try:
+            return sprot_parser_df.loc[row.name, 'sequence']
+        except:
+            try:
+                return sprot_parser_df[[
+                    row.name in s for s in sprot_parser_df.accessions]].iloc[0].seq_anc_tax
+            except:
+                return None
+    df_cafa_train_gos_seperated['sequence'] = df_cafa_train_gos_seperated.apply(
+        get_seq, axis=1)
 #%%
     # Add go_ancs
     p_go = obo_parser.GODag(obo_go_path)
