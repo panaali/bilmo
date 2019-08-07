@@ -152,6 +152,8 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
                     .databunch(bs=bs, num_workers=workers))
     
     data_cls.show_batch()
+    print('sample x ', data_cls.train_ds.x[0].text)
+    print('sample y ', data_cls.train_ds.y[0])
 #%%
     if vocab is None:
         data_cls.vocab.save(local_project_path +
