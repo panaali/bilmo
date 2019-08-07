@@ -9,6 +9,7 @@ from fastai.text.transform import BaseTokenizer
 from fastai.torch_core import num_distrib, np_func
 from fastai.core import num_cpus
 from fastai.script import call_parse, Param
+from fastai.metrics import accuracy
 from datetime import datetime
 import pickle
 import numpy as np
