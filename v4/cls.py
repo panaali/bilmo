@@ -151,7 +151,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
                     .label_from_df(cols=label_col_name)
                     .databunch(bs=bs, num_workers=workers))
     
-    data_cls.show_batch()
+    data_cls.show_batch().data
 #%%
     if vocab is None:
         data_cls.vocab.save(local_project_path +
