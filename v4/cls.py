@@ -4,8 +4,8 @@ from fastai.text import Tokenizer
 from fastai.text.data import TokenizeProcessor, NumericalizeProcessor, OpenFileProcessor, SPProcessor
 from fastai.text.data import TextList
 from fastai.text.learner import text_classifier_learner
-from fastai.text.models import AWD_LSTM
-from fastai.text.transform import BaseTokenizer
+from fastai.text.models import AWD_LSTM, TransformerXL, Transformer
+from fastai.text.transform import BaseTokenizer, Vocab
 from fastai.torch_core import num_distrib, np_func
 from fastai.core import num_cpus
 from fastai.script import call_parse, Param
@@ -63,7 +63,8 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         label_col_name: Param('label column name', str) = 'selected_go',
         selected_go: Param('which Go_id for binary classfication', str)=None,
         vocab: Param('vocab file', str) = None,
-        benchmarking: Param('benchmarking', int) = 0
+        benchmarking: Param('benchmarking', int) = 0,
+        network: Param('Which network to use? AWD_LSTM, Transformer, TransformerXL', str) = 'AWD_LSTM'
     ):
 #%%
     # For iPython testing only
@@ -85,7 +86,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
 
 #%%
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
-    random_seed = 0
+    random_seed = 42
     max_vocab = 30000
 #%%
     if gpu == '0':
@@ -116,11 +117,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         os.makedirs(local_project_path)
     print('local_project_path:', local_project_path)
 
-    """## Tokenization"""
-    tokenizer = Tokenizer(tok_func=dna_tokenizer, pre_rules=[],
-                        post_rules=[], special_cases=[])
-    processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
-                                include_eos=True), NumericalizeProcessor(max_vocab=max_vocab)]
+    
 #%%
     df = pickle.load(open(train_df, 'rb'))
     print('total number of rows', len(df))
@@ -154,6 +151,13 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         vocab_obj = None
     if use_sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
         processor = [OpenFileProcessor(), SPProcessor(sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
+    else:
+        """## Tokenization"""
+        tokenizer = Tokenizer(tok_func=dna_tokenizer, pre_rules=[],
+                            post_rules=[], special_cases=[])
+        processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
+                                    include_eos=True), NumericalizeProcessor(vocab=Vocab.load(vocab), max_vocab=max_vocab)]
+    # import pdb; pdb.set_trace()
     data_cls = (TextList.from_df(df_undersampled, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab_obj)
                     .split_by_rand_pct(0.1, seed = random_seed)
                     .label_from_df(cols=label_col_name)
@@ -182,7 +186,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     my_fbeta = FBeta(average='macro')
 #%%
     learn_cls = text_classifier_learner(
-        data_cls, AWD_LSTM, drop_mult=0.5, pretrained=False, metrics=[accuracy, my_fbeta])
+        data_cls, network, drop_mult=0.5, pretrained=False, metrics=[accuracy, my_fbeta])
 
     if gpu is None:
         print(gpu, 'DataParallel')
