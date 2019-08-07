@@ -63,7 +63,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         label_col_name: Param('label column name', str) = 'selected_go',
         selected_go: Param('which Go_id for binary classfication', str)=None,
         vocab: Param('vocab file', str) = None,
-        benchmarking: Param('benchmarking', int) = 1
+        benchmarking: Param('benchmarking', int) = 0
     ):
 #%%
     # For iPython testing only
@@ -122,8 +122,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
                                 include_eos=True), NumericalizeProcessor(max_vocab=max_vocab)]
 #%%
-    df = pickle.load(
-        open(train_df, 'rb'))
+    df = pickle.load(open(train_df, 'rb'))
     print('total number of rows', len(df))
 #%%
     df = df.dropna(subset=['seq_anc_tax'])
@@ -137,17 +136,22 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
             return res
         df['selected_go'] = df.apply(find_go, axis=1)
         available_T = (df['selected_go'] == 'T').sum()
-        print('number of rows that has', selected_go, 'is: ', available_T)
+        if gpu == 0:
+            print('number of rows that has', selected_go, 'is: ', available_T)
         df_undersampled_F = df[df['selected_go'] == 'F'][:available_T].copy()
         df_undersampled_T = df[df['selected_go'] == 'T'].copy()
         df_undersampled = pd.concat(
             [df_undersampled_F, df_undersampled_T])
-
-        print('len of undersampled train_df', len(df_undersampled))
+        if gpu == '0':
+            print('len of undersampled train_df', len(df_undersampled))
         
 #%%
     if vocab is not None:
         vocab_obj = pickle.load(open(vocab, 'rb'))
+        if gpu == 0:
+            print('vocab object loaded, len', len(vocab_obj))
+    else:
+        vocab_obj = None
     if use_sp_processor: # './data/sprot_lm/tmp/spm.model', './data/sprot_lm/tmp/spm.vocab'
         processor = [OpenFileProcessor(), SPProcessor(sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
     data_cls = (TextList.from_df(df_undersampled, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab_obj)
@@ -155,18 +159,19 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
                     .label_from_df(cols=label_col_name)
                     .databunch(bs=bs, num_workers=workers))
     
-    data_cls.show_batch()
-    print('sample x ', data_cls.train_ds.x[0].text)
-    print('sample y ', data_cls.train_ds.y[0])
+    # data_cls.show_batch()
+    if gpu == 0:
+        print('sample x ', data_cls.train_ds.x[0].text)
+        print('sample y ', data_cls.train_ds.y[0])
 
 #%%
     if vocab is None:
         data_cls.vocab.save(local_project_path +
                        'vocab_cls-' + datetime_str + '.pickle')
-
-    print('data_cls Training set size', len(data_cls.train_ds))
-    print('data_cls Validation set size', len(data_cls.valid_ds))
-    print('vocab size ', len(data_cls.vocab.itos))
+    if gpu == 0:
+        print('data_cls Training set size', len(data_cls.train_ds))
+        print('data_cls Validation set size', len(data_cls.valid_ds))
+        print('vocab size ', len(data_cls.vocab.itos))
 
     from sklearn.metrics import f1_score
 
@@ -215,7 +220,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     learn_cls.fit_one_cycle(20, slice(lr/10/(2.6**4), lr/10), moms=(0.8, 0.7))
     learn_cls.save('cls-v1-4-' + datetime_str)
     
-    learn_cls.export(file = 'export-cls-v1-4-' + datetime_str+ '.pkl')
+    # learn_cls.export(file = 'export-cls-v1-4-' + datetime_str+ '.pkl')
     print('Done')
 
 # main(None)
