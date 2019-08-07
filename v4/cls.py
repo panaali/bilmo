@@ -188,6 +188,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         return f1_score(targ, np.argmax(inp, axis=-1))
 
     my_fbeta = FBeta(average='macro')
+    my_fbeta.beta = 1
 #%%
     learn_cls = text_classifier_learner(
         data_cls, eval(network), drop_mult=0.5, pretrained=False, metrics=[accuracy, my_fbeta])
