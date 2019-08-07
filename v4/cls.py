@@ -1,5 +1,4 @@
 #%%
-from sklearn.metrics import f1_score
 from fastai.distributed import setup_distrib
 from fastai.text import Tokenizer
 from fastai.text.data import TokenizeProcessor, NumericalizeProcessor, OpenFileProcessor, SPProcessor
@@ -167,7 +166,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     print('data_cls Validation set size', len(data_cls.valid_ds))
     print('vocab size ', len(data_cls.vocab.itos))
 
-
+    from sklearn.metrics import f1_score
 
     @np_func
     def f1(inp, targ):
