@@ -49,7 +49,7 @@ class dna_tokenizer(BaseTokenizer):
         return result
 #%%
 @call_parse
-def main(train_df: Param("location of the training dataframe", str, opt=False),
+def main(train_df_path: Param("location of the training dataframe", str, opt=False),
         gpu: Param("GPU to run on", str) = None,
         max_cpu_per_dataloader: Param("Max CPU", int)=8,
         bs: Param("batch size", int)=256,
@@ -61,7 +61,8 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         sequence_col_name: Param("name of the sequence column",
                         str) = 'seq_anc_tax',
         label_col_name: Param('label column name', str) = 'selected_go',
-        selected_go: Param('which Go_id for binary classfication', str)=None,
+        selected_go: Param('which Go_id for binary classfication. selected_go vs others', str)=None,
+        selected_go2: Param('which Go_id for binary classfication. selected_go vs selected_go2', str)=None,
         vocab: Param('vocab file', str) = None,
         benchmarking: Param('benchmarking', int) = 0,
         network: Param('Which network to use? AWD_LSTM, Transformer, TransformerXL', str) = 'AWD_LSTM'
@@ -76,7 +77,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     # sp_model = None
     # sp_vocab = None
     # gpu = None
-    # train_df = data_path + \
+    # train_df_path = data_path + \
     #     'cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p'
     # sequence_col_name = 'seq_anc_tax'
     # vocab = data_path + 'sprot_lm/vocab_lm_sproat_seq_anc_tax.pickle'
@@ -119,7 +120,8 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
 
     
 #%%
-    df = pickle.load(open(train_df, 'rb'))
+    df = pickle.load(open(train_df_path, 'rb'))
+    print(df.columns)
     print('total number of rows', len(df))
 #%%
     df = df.dropna(subset=['seq_anc_tax'])
@@ -141,7 +143,31 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
             [df_undersampled_F, df_undersampled_T])
         if gpu == '0':
             print('len of undersampled train_df', len(df_undersampled))
-        
+        training_df = df_undersampled
+    elif label_col_name == 'selected_go_vs':
+        def find_go(row, go_id = selected_go):
+            if go_id in row.go:
+                res = 'is_' + selected_go
+            else:
+                res = 'not_' + selected_go
+            return res
+        df['selected_go'] = df.apply(find_go, axis=1, go_id = selected_go)
+        df['selected_go2'] = df.apply(find_go, axis=1, go_id = selected_go2)
+        available_T1 = (df['selected_go'] == 'is_' + selected_go).sum()
+        available_T2 = (df['selected_go2'] == 'is_' + selected_go2).sum()
+        if gpu == 0:
+            print('number of rows that has', selected_go, 'is: ', available_T1)
+            print('number of rows that has', selected_go, 'is: ', available_T2)
+
+        df_undersampled_1 = df[df['selected_go'] == 'is_' + selected_go & df['selected_go2'] == 'not_' + selected_go2].copy()
+        df_undersampled_2 = df[df['selected_go_2'] == 'is_' + selected_go2 & df['selected_go'] == 'not_' + selected_go].copy()
+        df_undersampled = pd.concat(
+            [df_undersampled_1, df_undersampled_2])
+        if gpu == '0':
+            print('len of undersampled train_df', len(df_undersampled))
+        training_df = df_undersampled
+    else:
+        training_df = df
 #%%
     if vocab is not None:
         vocab_obj = pickle.load(open(vocab, 'rb'))
@@ -162,7 +188,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
         processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
                                        include_eos=True), NumericalizeProcessor(vocab=vocab_class_obj, max_vocab=max_vocab)]
     # import pdb; pdb.set_trace()
-    data_cls = (TextList.from_df(df_undersampled, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab_obj)
+    data_cls = (TextList.from_df(training_df, path=local_project_path, cols=sequence_col_name, processor=processor, vocab=vocab_obj)
                     .split_by_rand_pct(0.1, seed = random_seed)
                     .label_from_df(cols=label_col_name)
                     .databunch(bs=bs, num_workers=workers))
@@ -190,7 +216,7 @@ def main(train_df: Param("location of the training dataframe", str, opt=False),
     my_fbeta = FBeta(average='macro')
 #%%
     learn_cls = text_classifier_learner(
-        data_cls, eval(network), drop_mult=0.5, pretrained=False, metrics=[accuracy, my_fbeta])
+        data_cls, eval(network), drop_mult=0.1, pretrained=False, metrics=[accuracy, my_fbeta])
 
     if gpu is None:
         print(gpu, 'DataParallel')
