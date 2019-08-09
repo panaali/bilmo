@@ -22,17 +22,7 @@ import inspect
 
 
 """
-Language Modeling
-run :
-python -m fastai.launch \
-    --gpus=01 v4/cls.py \
-    --max_cpu_per_dataloader=40 \
-    --bs=200 \
-    --fp16=0 \
-    --use_sp_processor=1 \
-    --sp_model=./data/sprot_lm/tmp/spm.model \
-    --sp_vocab=./data/sprot_lm/tmp/spm.vocab \
-    
+Classifier
 """
 #%%
 data_path = './data/'
@@ -70,6 +60,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
         network: Param('Which network to use? AWD_LSTM, Transformer, TransformerXL', str) = 'AWD_LSTM'
     ):
 #%%
+    
     # For iPython testing only
     # data_path = '../cafa/data/'
     # max_cpu_per_dataloader = 8
@@ -103,8 +94,10 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
 #%%
     #### Distributed
     print('gpu', gpu)
-    gpu = setup_distrib(gpu)
     n_gpus = num_distrib()
+    gpu = setup_distrib(gpu)
+    if n_gpus < 2:
+        os.environ["WORLD_SIZE"] = '0'
     if n_gpus > 0:
         workers = min(max_cpu_per_dataloader, num_cpus()//n_gpus)
     else:
@@ -215,17 +208,17 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     def f1(inp, targ):
         return f1_score(targ, np.argmax(inp, axis=-1))
 
-    my_fbeta = FBeta(average='macro')
-    my_fbeta.beta = 1
+    f1 = FBeta(average='macro')
+    f1.beta = 1
 #%%
     learn_cls = text_classifier_learner(
         data_cls, eval(network), drop_mult=0.1, pretrained=False,
-        metrics=[accuracy, my_fbeta], callback_fns=[CSVLogger, KillerCallback])
+        metrics=[accuracy, f1], callback_fns=[CSVLogger])
 
     if gpu is None:
         print(gpu, 'DataParallel')
         learn_cls.model = nn.DataParallel(learn_cls.model)
-    else:
+    elif n_gpus > 1:
         print(gpu, 'to_distributed')
         learn_cls.to_distributed(gpu)
         if fp16:
