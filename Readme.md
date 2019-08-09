@@ -1,2 +1,4 @@
-# Self-Supervised DNA and Protein Language Modeling for CAFA Challenge
+# Protein Language Modeling for CAFA Challenge
+
+by Ali Panahi
 
