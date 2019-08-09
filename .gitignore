@@ -5,6 +5,7 @@ log/
 **.pth
 .idea
 .vscode
+*.code-workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
