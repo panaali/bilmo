@@ -1,0 +1,14 @@
+name: protein-lm-modeler-cafa
+channels:
+- pytorch
+- conda-forge
+- anaconda
+- defaults
+dependencies:
+- pytorch=1.0.0
+- pip
+- pip:
+  - fastai==1.0.55
+  - yacs==0.1.6
+  - sentencepiece==0.1.82
+  - scikit-learn==0.21.2
