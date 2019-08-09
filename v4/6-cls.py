@@ -11,6 +11,7 @@ from fastai.core import num_cpus
 from fastai.script import call_parse, Param
 from fastai.metrics import accuracy, FBeta
 from fastai.callbacks.csv_logger import CSVLogger
+from .callbacks.killer import KillerCallback
 from datetime import datetime
 import pickle
 import numpy as np
@@ -218,7 +219,8 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     my_fbeta.beta = 1
 #%%
     learn_cls = text_classifier_learner(
-        data_cls, eval(network), drop_mult=0.1, pretrained=False, metrics=[accuracy, my_fbeta])
+        data_cls, eval(network), drop_mult=0.1, pretrained=False,
+        metrics=[accuracy, my_fbeta], callback_fns=[CSVLogger, KillerCallback])
 
     if gpu is None:
         print(gpu, 'DataParallel')
