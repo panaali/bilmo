@@ -1,5 +1,5 @@
 python -m fastai.launch \
---gpus=01 v4/cls.py "./data/cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p" \
+--gpus=01 src/cls.py "./data/cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p" \
 --max_cpu_per_dataloader=40 \
 --bs=32 \
 --fp16=0 \
