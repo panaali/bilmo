@@ -1,5 +1,8 @@
 import os
 import torch
+from fastai.callback import Callback
+from fastai.torch_core import *
+
 __all__ = ['KillerCallback']
 
 class KillerCallback(Callback):
