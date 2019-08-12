@@ -16,6 +16,7 @@ class KillerCallback(LearnerCallback):
                     torch.cuda.empty_cache()
                 except:
                     pass
+            print('Killed the script because of the kill.me file. Remove it to prevent this behaviour.')
             exit(0)
 
     def on_batch_end(self, **kwargs: Any) -> None:
