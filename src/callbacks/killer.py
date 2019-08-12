@@ -6,6 +6,7 @@ from fastai.torch_core import *
 __all__ = ['KillerCallback']
 
 class KillerCallback(LearnerCallback):
+
     def check_for_killme(self, **kwargs: Any) -> None:
         if os.path.isfile('kill.me'):
             num_gpus = torch.cuda.device_count()
@@ -17,5 +18,5 @@ class KillerCallback(LearnerCallback):
                     pass
             exit(0)
 
-    def on_epoch_end(self, **kwargs: Any) -> None:
+    def on_batch_end(self, **kwargs: Any) -> None:
         self.check_for_killme()
