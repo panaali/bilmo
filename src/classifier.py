@@ -11,6 +11,7 @@ from fastai.core import num_cpus
 from fastai.script import call_parse, Param
 from fastai.metrics import accuracy, FBeta
 from fastai.callbacks.csv_logger import CSVLogger
+from fastprogress import fastprogress
 from functools import partial
 from datetime import datetime
 import pickle
@@ -20,6 +21,7 @@ from torch import nn
 import torch
 import pandas as pd
 import inspect
+from textwrap import wrap
 from callbacks import *
 
 """
@@ -28,8 +30,8 @@ Classifier
 # %%
 data_path = './data/'
 
-
-class dna_tokenizer(BaseTokenizer):
+class dna_tokenizer_n_char(BaseTokenizer):
+    n_char = 1
     def tokenizer(self, t):
         tokens = t.split(' ')
         bos = tokens[0]
@@ -37,7 +39,7 @@ class dna_tokenizer(BaseTokenizer):
         after_seq = tokens[2:-1]
         eos = tokens[-1]
         result = [bos]
-        result += list(seq)  # sequence string to list
+        result += wrap(seq, self.n_char)  # sequence string to list
         result += after_seq
         result.append(eos)
         return result
@@ -60,6 +62,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
          selected_go2: Param('which Go_id for binary classfication. selected_go vs selected_go2', str) = None,
          vocab: Param('vocab file', str) = None,
          benchmarking: Param('benchmarking', int) = 0,
+         tokenizer_n_char: Param('every N chararachters for tokenization', int) = 1,
          network: Param(
              'Which network to use? AWD_LSTM, Transformer, TransformerXL', str) = 'AWD_LSTM'
          ):
@@ -89,8 +92,11 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
 
     # %%
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
+    fastprogress.SAVE_PATH = f'fastprogress-{datetime_str}.txt'
     random_seed = 42
-    max_vocab = 30000
+    max_vocab = 60000
+
+    print(datetime_str)
 # %%
     arg_strs = '############################################################\n'
     arg_strs += datetime_str + '\n'
@@ -115,16 +121,15 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     n_gpus = num_distrib()
     gpu = setup_distrib(gpu)
     if n_gpus < 2:
-        # os.environ["WORLD_SIZE"] = '0' # Why I did this :D ?
-        pass
+        os.environ["WORLD_SIZE"] = '0' # because the average callback has does not consider the case of 1
     if n_gpus > 0:
         workers = min(max_cpu_per_dataloader, num_cpus()//n_gpus)
     else:
         workers = min(max_cpu_per_dataloader, num_cpus())
     
-    os.environ["OMP_NUM_THREADS"] = str(1)
-    os.environ["MKL_NUM_THREADS"] = str(1)
-    torch.set_num_threads(1)
+    # os.environ["OMP_NUM_THREADS"] = str(1)
+    # os.environ["MKL_NUM_THREADS"] = str(1)
+    # torch.set_num_threads(1)
     print(gpu, 'n_gpus', n_gpus)
     print(gpu, 'workers', workers)
 
@@ -159,7 +164,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
         df_undersampled_T = df[df['selected_go'] == 'T'].copy()
         df_undersampled = pd.concat(
             [df_undersampled_F, df_undersampled_T])
-        if gpu == '0':
+        if gpu == 0:
             print('len of undersampled train_df', len(df_undersampled))
         training_df = df_undersampled
     elif label_col_name == 'selected_go_vs':
@@ -183,7 +188,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
                                selected_go2 & df['selected_go'] == 'not_' + selected_go].copy()
         df_undersampled = pd.concat(
             [df_undersampled_1, df_undersampled_2])
-        if gpu == '0':
+        if gpu == 0:
             print('len of undersampled train_df', len(df_undersampled))
         training_df = df_undersampled
     else:
@@ -200,7 +205,8 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
             sp_model=sp_model, sp_vocab=sp_vocab, max_sentence_len=35826, max_vocab_sz=max_vocab)]
     else:
         """## Tokenization"""
-        tokenizer = Tokenizer(tok_func=dna_tokenizer, pre_rules=[],
+        dna_tokenizer_n_char.n_char = tokenizer_n_char
+        tokenizer = Tokenizer(tok_func=dna_tokenizer_n_char, pre_rules=[],
                               post_rules=[], special_cases=[])
         if vocab is not None:
             vocab_class_obj = Vocab.load(vocab)
@@ -253,7 +259,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
         learn_cls.to_distributed(gpu)
         if fp16:
             learn_cls.to_fp16()
-    if lm_encoder is not None:
+    if lm_encoder is not None and vocab is not None:
         learn_cls.load_encoder(lm_encoder)
 
     lr = 2e-2
