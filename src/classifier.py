@@ -61,7 +61,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     ):
 #%%
     
-    # For iPython testing only
+    # # For iPython testing only
     # data_path = '../cafa/data/'
     # max_cpu_per_dataloader = 8
     # bs = 256
@@ -77,18 +77,27 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     # label_col_name = 'selected_go'
     # selected_go = 'GO:0017076'
     # lm_encoder = 'lm-sp-ans-v1-5-enc'
+    # network = 'AWD_LSTM'
+
+    # gpus = '0'
+    # gpus = list(range(torch.cuda.device_count())) if gpus=='all' else list(gpus)
+    # os.environ["WORLD_SIZE"] = str(len(gpus))
 
 #%%
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
     random_seed = 42
     max_vocab = 30000
 #%%
+    arg_strs = '############################################################\n'
+    arg_strs += datetime_str + '\n'
     if gpu == '0':
         frame = inspect.currentframe()
         args, _, _, values = inspect.getargvalues(frame)
         print('function name "%s"' % inspect.getframeinfo(frame)[2])
         for i in args:
-            print("    %s = %s" % (i, values[i]))
+            arg_str = "    %s = %s" % (i, values[i])
+            arg_strs += arg_str + '\n'
+            print(arg_str)
     """## Prepare Dataset"""
     local_project_path = data_path + 'sprot_lm/'
 #%%
@@ -214,7 +223,10 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     learn_cls = text_classifier_learner(
         data_cls, eval(network), drop_mult=0.1, pretrained=False,
         metrics=[accuracy, f1], callback_fns=[partial(CSVLogger, append=True), KillerCallback])
-
+    if gpu == 0:
+        csv_file = open(local_project_path + 'history.csv', 'a')
+        csv_file.write(arg_strs)
+        csv_file.close()
     if gpu is None:
         print(gpu, 'DataParallel')
         learn_cls.model = nn.DataParallel(learn_cls.model)
