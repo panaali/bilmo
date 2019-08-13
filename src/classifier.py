@@ -92,7 +92,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
 
     # %%
     datetime_str = f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}'
-    fastprogress.SAVE_PATH = f'fastprogress-{datetime_str}.txt'
+    fastprogress.SAVE_PATH = f'./log/fastprogress-{datetime_str}.txt'
     random_seed = 42
     max_vocab = 60000
 
@@ -138,6 +138,8 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     np.random.seed(random_seed)
 
     if not os.path.exists(local_project_path):
+        os.makedirs(local_project_path)
+    if not os.path.exists(local_project_path + 'vocab/'):
         os.makedirs(local_project_path)
     print('local_project_path:', local_project_path)
 
@@ -227,7 +229,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
 
 # %%
     if vocab is None:
-        data_cls.vocab.save(local_project_path +
+        data_cls.vocab.save(local_project_path + 'vocab/' +
                             'vocab_cls-' + datetime_str + '.pickle')
     if gpu == 0:
         print('data_cls Training set size', len(data_cls.train_ds))
