@@ -1,4 +1,7 @@
+
 #%%
+from textwrap import wrap
+
 from fastai.text.models import AWD_LSTM, TransformerXL, Transformer, Activation
 def run_from_ipython():
     try:
@@ -30,7 +33,8 @@ from torch import nn
 import torch
 import pandas as pd
 import inspect
-from textwrap import wrap
+
+
 if run_from_ipython():
     from src.callbacks import *
 else:
@@ -175,32 +179,32 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
 # %%
     # # For iPython testing only
     
-    # max_cpu_per_dataloader = 8
-    # bs = 64
-    # val_bs = 128
-    # fp16 = 0
-    # use_sp_processor = 0
-    # sp_model = None
-    # sp_vocab = None
-    # gpu = 0
-    # local_rank = None
-    # train_df_path = data_path + \
-    #     'cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p'
-    # sequence_col_name = 'sequence'
-    # label_col_name = 'selected_go'
-    # selected_go = 'GO:0036094'
-    # # vocab_path = data_path + 'sprot_lm/vocab_lm_sproat_seq_anc_tax.pickle'
-    # # lm_encoder = 'lm-sp-ans-v1-5-enc'
-    # vocab_path = None
-    # lm_encoder = None
-    # network = 'AWD_LSTM'
-    # tokenizer_n_char = 1
-    # gpus = '0'
-    # gpus = list(range(torch.cuda.device_count())) if gpus=='all' else list(gpus)
-    # os.environ["WORLD_SIZE"] = '0'
-    # valid_split_percentage = 0.1
-    # selected_go2 = None
-    # skip = 1
+    max_cpu_per_dataloader = 0
+    bs = 64
+    val_bs = 128
+    fp16 = 0
+    use_sp_processor = 0
+    sp_model = None
+    sp_vocab = None
+    gpu = 0
+    local_rank = None
+    train_df_path = data_path + \
+        'cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p'
+    sequence_col_name = 'sequence'
+    label_col_name = 'selected_go'
+    selected_go = 'GO:0036094'
+    # vocab_path = data_path + 'sprot_lm/vocab_lm_sproat_seq_anc_tax.pickle'
+    # lm_encoder = 'lm-sp-ans-v1-5-enc'
+    vocab_path = None
+    lm_encoder = None
+    network = 'AWD_LSTM'
+    tokenizer_n_char = 1
+    gpus = '0'
+    gpus = list(range(torch.cuda.device_count())) if gpus=='all' else list(gpus)
+    os.environ["WORLD_SIZE"] = '0'
+    valid_split_percentage = 0.1
+    selected_go2 = None
+    skip = 1
 
 # %%
     valid_split_percentage = float(valid_split_percentage)
@@ -288,6 +292,9 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
                                        include_eos=True), NumericalizeProcessor(vocab=vocab_class_obj, max_vocab=max_vocab)]
 # %%
     df_valid_small = df_valid[:600]
+    # import multiprocessing
+    # multiprocessing.set_start_method('spawn', True)
+    # os.sched_setaffinity(0, {0})
     data_cls = TextClasDataBunch.from_df(local_project_path, train_df=df_train, valid_df=df_valid_small, test_df=df_valid,
                                         tokenizer=tokenizer, vocab=vocab_class_obj,
                                         text_cols=sequence_col_name, #processor=processor,
@@ -349,7 +356,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
                               ff_p=0.1, embed_p=0.1, output_p=0.1, bias=False, scale=True, act=Activation.ReLU, double_drop=True,
                               init=init_transformer, mem_len=150, mask=False)
     else:
-        raise "network not defined"
+        raise BaseException("network not defined")
 
     learn_cls = text_classifier_learner(
         data_cls, eval(network), config=network_config, drop_mult=0.1, pretrained=False,
@@ -430,7 +437,7 @@ def main(train_df_path: Param("location of the training dataframe", str, opt=Fal
     write_result(df_test.uniq_id[:100], preds, selected_go, local_project_path +
                  'result/' + 'result-' + datetime_str + '.txt', learn_cls.data.classes)
     
-# main(None)
+main(None)
 
 
 # %%
