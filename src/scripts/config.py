@@ -39,6 +39,7 @@ class Config:
         'sampling_method' : 'undersampling',
         'valid_split_percentage' : 0.1,
         'network' : 'my_AWD_LSTM', # Transformer, TransformerXL
+        'optimizer' : 'radam', # adam, radam
         'random_seed' : 42,
         'max_vocab' : 60000,
         'smaller_valid_df': 600,  # `None` to use full validation
