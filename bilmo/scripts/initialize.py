@@ -1,4 +1,4 @@
-from src.scripts.config import Config
+from bilmo.scripts.config import Config
 import numpy as np
 import torch
 import random
@@ -19,8 +19,6 @@ def check_folder_path():
     local_project_path = conf['local_project_path']
     if not os.path.exists(local_project_path):
         os.makedirs(local_project_path)
-    if conf['vocab_path'] and not os.path.exists(conf['vocab_path']):
-        os.makedirs(conf['vocab_path'])
     log.debug('local_project_path:' + local_project_path)
 
 def config_logger(logPath, filename):

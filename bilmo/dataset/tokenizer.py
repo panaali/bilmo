@@ -1,4 +1,4 @@
-from src.scripts.config import Config
+from bilmo.scripts.config import Config
 from fastai.text.transform import BaseTokenizer
 from textwrap import wrap
 conf = Config.conf

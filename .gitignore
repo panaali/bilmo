@@ -1,6 +1,7 @@
 data/
 .ipynb_checkpoints/
 log/
+tensorboard-logs/
 **/*.pth
 **.pth
 .idea

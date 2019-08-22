@@ -1,3 +1,3 @@
-# Protein Language Modeling for CAFA Challenge
+# Biological Language Modeler (BiLMo)
 
 by Ali Panahi
