@@ -1,6 +1,6 @@
-from src.scripts.config import Config
+from bilmo.scripts.config import Config
 import logging
-import pickle 
+import pickle
 import numpy as np
 import pandas as pd
 conf = Config.conf
@@ -17,7 +17,7 @@ def prepare_training_binary(df):
     df['selected_class'] = df.apply(find_go, axis=1)
     available_T = (df['selected_class'] == selected_class).sum()
     available_F = len(df) - available_T
-    log.debug('number of rows that has' + selected_class + 'is: ' + str(available_T))
+    log.debug('number of rows that has ' + selected_class + 'is: ' + str(available_T))
 
     df_F = df[df['selected_class'] == 'others']
     df_T = df[df['selected_class'] == selected_class]
@@ -44,6 +44,8 @@ def prepare_training_binary(df):
 
 
 def prepare_training_multiclass(df):
+    pass
+    # old code, should be updated!! we also need df_valid
     selected_classes = conf['multiclass']['selected_classes']
     selected_class = selected_classes[0]
     selected_class2 = selected_classes[1]
@@ -70,6 +72,14 @@ def prepare_training_multiclass(df):
     log.debug('len of undersampled train_df ' + str(len(df_undersampled)))
     return df_undersampled
 
+def prepare_training_multilabel(df):
+    df[conf['class_col_name']] = df.apply(lambda r: " ".join(r.go), axis=1)
+    df = df.iloc[np.random.permutation(len(df))]
+    cut = int(conf['valid_split_percentage'] * len(df)) + 1
+    train_df, valid_df = df[cut:], df[:cut]
+    return train_df, valid_df
+
+
 def prepare_training_df(df):
     df = df.dropna(subset=[conf['sequence_col_name']]).copy()
     log.info('total number of rows after removing NaN ' + str(len(df)))
@@ -77,9 +87,13 @@ def prepare_training_df(df):
         return prepare_training_binary(df)
     elif conf['classificiation_type'] == 'multiclass':
         return prepare_training_multiclass(df)
+    elif conf['classificiation_type'] == 'multilabel':
+        return prepare_training_multilabel(df)
+    else:
+        raise BaseException("classificiation_type not exist")
 
 
-def load_data():
+def load_data_train():
     if conf['training_dataframe_path'] == None:
         raise BaseException("training_dataframe_path not set in config file")
     df = pickle.load(open(conf['training_dataframe_path'], 'rb'))
@@ -87,3 +101,44 @@ def load_data():
     log.info('total number of rows ' + str(len(df)))
     df_train, df_valid = prepare_training_df(df)
     return df_train, df_valid
+
+def load_data_test():
+    df_test = pd.read_csv(conf['data_path'] +
+                            'cafa3/targets.csv')
+
+    # Important Note:
+    # because the number of targets are 130K and it takes a long time to predict
+    # for all of them, we just create the prediction for the proteins that are
+    # expected to be assessed. This should be ok for the protein centeric evaluation
+    # but I guess it's not ok to do this for the term centeric evaluation
+
+    if conf['predict_only_final_targets']:
+        df_targets_final_BPO = pd.read_csv(
+            conf['data_path'] +
+            'cafa3/CAFA 3 Benchmarks/benchmark20171115/groundtruth/leafonly_BPO.txt',
+            sep='\t',
+            names=['uniq_id', 'go_id'],
+            header=None)
+
+        df_targets_final_CCO = pd.read_csv(
+            conf['data_path'] +
+            'cafa3/CAFA 3 Benchmarks/benchmark20171115/groundtruth/leafonly_CCO.txt',
+            sep='\t',
+            names=['uniq_id', 'go_id'],
+            header=None)
+
+        df_targets_final_MFO = pd.read_csv(
+            conf['data_path'] +
+            'cafa3/CAFA 3 Benchmarks/benchmark20171115/groundtruth/leafonly_MFO.txt',
+            sep='\t',
+            names=['uniq_id', 'go_id'],
+            header=None)
+
+        df_targets_final = pd.concat(
+            [df_targets_final_BPO, df_targets_final_CCO, df_targets_final_MFO])
+
+        df_test = df_test.loc[df_test['uniq_id'].isin(
+            df_targets_final.uniq_id.unique())]
+
+
+    return df_test

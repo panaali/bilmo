@@ -1,14 +1,22 @@
-name: protein-lm-modeler-cafa
+name: bilmo
 channels:
 - pytorch
 - conda-forge
 - anaconda
 - defaults
 dependencies:
-- pytorch=1.0.0
+- pytorch=1.2.0
 - pip
+- dill=0.3.0
 - pip:
-  - fastai==1.0.55
-  - yacs==0.1.6
+  - fastai==1.0.57
   - sentencepiece==0.1.82
   - scikit-learn==0.21.2
+  - tensorboardX==1.8
+  - tb-nightly==1.15.0a20190821
+  - future
+  - pyyaml
+  - biopython
+  - matplotlib
+  - seaborn
+  - goatools

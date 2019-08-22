@@ -1,4 +1,4 @@
-from src.scripts.config import Config
+from bilmo.scripts.config import Config
 from fastai.text.models import AWD_LSTM
 from torch import nn
 import logging
@@ -11,3 +11,4 @@ def get_AWD_LSTM_config():
                         bidir=False, output_p=0.4, hidden_p=0.3, input_p=0.4, embed_p=0.05, weight_p=0.5)
 
 
+my_AWD_LSTM = AWD_LSTM

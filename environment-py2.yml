@@ -1,0 +1,12 @@
+name: bilmo-py2
+channels:
+- conda-forge
+- anaconda
+- defaults
+dependencies:
+- pip
+- pip:
+  - pyyaml
+  - biopython
+  - matplotlib
+  - seaborn
