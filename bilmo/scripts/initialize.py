@@ -4,6 +4,7 @@ import torch
 import random
 import logging
 import os
+import subprocess
 from pprint import pformat
 conf = Config.conf
 log = logging.getLogger("cafa-logger")
@@ -35,9 +36,19 @@ def config_logger(logPath, filename):
     rootLogger.addHandler(consoleHandler)
     log.setLevel(conf['log_level'])
 
+
+def get_git_revision_hash():
+    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+
+
+def get_git_revision_short_hash():
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
+
 def initialize():
     config_logger(logPath=conf['log_path'], filename=conf['log_filename'])
     log.debug('Initializing')
+    log.debug('Git Hash: ' + str(get_git_revision_hash()) + ' - short hash: ' +
+              str(get_git_revision_short_hash()))
     log.info(pformat(conf))  # Print config
     set_random_seed(conf['random_seed'])
     check_folder_path()
