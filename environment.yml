@@ -12,7 +12,7 @@ dependencies:
   - fastai==1.0.57
   - sentencepiece==0.1.82
   - scikit-learn==0.21.2
-  - tensorboardX==1.8
+  - git+https://github.com/lanpa/tensorboardX.git@9b9933aa6b614de32341142533e7cf9594cdc2c4#egg=tensorboardx_with_hparams
   - tb-nightly==1.15.0a20190821
   - future
   - pyyaml
@@ -20,3 +20,4 @@ dependencies:
   - matplotlib
   - seaborn
   - goatools
+  - comet_ml

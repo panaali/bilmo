@@ -11,6 +11,7 @@ def add_tensorboard(learn):
                                  conf['project_name'])
 
     def on_train_begin(self, **kwargs):
+        """disables graph writing"""
         pass
 
     if not conf['log_graph_tensorboard']:
