@@ -82,7 +82,7 @@ def prepare_training_multilabel(df):
 
 def prepare_training_df(df):
     df = df.dropna(subset=[conf['sequence_col_name']]).copy()
-    log.info('total number of rows after removing NaN ' + str(len(df)))
+    log.info('total number of training rows after removing NaN ' + str(len(df)))
     if conf['classificiation_type'] == 'binary':
         return prepare_training_binary(df)
     elif conf['classificiation_type'] == 'multiclass':
@@ -98,11 +98,16 @@ def load_data_train():
         raise BaseException("training_dataframe_path not set in config file")
     df = pickle.load(open(conf['training_dataframe_path'], 'rb'))
     log.debug(df.columns)
-    log.info('total number of rows ' + str(len(df)))
+    log.info('total number of training rows ' + str(len(df)))
     df_train, df_valid = prepare_training_df(df)
+    if conf['smaller_train_df'] is not None:
+        df_train, df_valid = df_train[:conf[
+            'smaller_train_df']], df_valid[:conf['smaller_train_df']]
     return df_train, df_valid
 
 def load_data_test():
+    if not conf['test_on_cafa3_testset']:
+        return None
     df_test = pd.read_csv(conf['data_path'] +
                             'cafa3/targets.csv')
 

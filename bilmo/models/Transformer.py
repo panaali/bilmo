@@ -24,15 +24,20 @@ def init_transformer(m):
             nn.init.normal_(m.v, 0., 0.02)
 
 
+"""
+https://docs.fast.ai/text.models.html
+"""
 def get_transformer_config():
-    return dict(ctx_len=512, n_layers=12, n_heads=12, d_model=768, d_head=64, d_inner=3072, resid_p=0.1, attn_p=0.1,
-                            ff_p=0.1, embed_p=0.1, output_p=0., bias=True, scale=True, act=Activation.GeLU, double_drop=False,
-                            init=init_transformer, mask=False)
-def get_transformerXL_config():
-    return dict(ctx_len=150, n_layers=12, n_heads=10, d_model=410, d_head=41, d_inner=2100, resid_p=0.1, attn_p=0.1,
-                            ff_p=0.1, embed_p=0.1, output_p=0.1, bias=False, scale=True, act=Activation.ReLU, double_drop=True,
-                            init=init_transformer, mem_len=150, mask=False)
+    T_config = conf['Transformer_config']
+    T_config['init'] = eval(T_config['init'])
+    T_config['act'] = eval(T_config['act'])
+    return T_config
 
+def get_transformerXL_config():
+    TXL_config = conf['TransformerXL_config']
+    TXL_config['init'] = eval(TXL_config['init'])
+    TXL_config['act'] = eval(TXL_config['act'])
+    return TXL_config
 
 my_Transformer = Transformer
 my_TransformerXL = TransformerXL

@@ -41,5 +41,8 @@ def initialize():
     log.info(pformat(conf))  # Print config
     set_random_seed(conf['random_seed'])
     check_folder_path()
-
-
+    import sys
+    is_debugger = True if getattr(sys, 'gettrace', None) is not None else False
+    if is_debugger:
+        log.debug('Debug mode detected, setting n_workers to 0')
+        conf['n_workers'] = 0

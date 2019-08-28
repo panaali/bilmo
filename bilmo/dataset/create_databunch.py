@@ -30,8 +30,11 @@ def get_processor(vocab_class_obj):
         processor = [OpenFileProcessor(), SPProcessor(
             sp_model=conf['sentencePiece']['model'], sp_vocab=conf['sentencePiece']['vocab'], max_sentence_len=conf['sentencePiece']['max_sentence_len'], max_vocab_sz=conf['sentencePiece']['max_vocab'])]
     else:
-        tokenizer = Tokenizer(tok_func=dna_tokenizer_n_char, pre_rules=[],
-                              post_rules=[], special_cases=[])
+        tokenizer = Tokenizer(tok_func=dna_tokenizer_n_char,
+                              pre_rules=[],
+                              post_rules=[],
+                              special_cases=[],
+                              n_cpus=conf['n_workers'])
         processor = [TokenizeProcessor(tokenizer=tokenizer, include_bos=True,
                                        include_eos=True), NumericalizeProcessor(vocab=vocab_class_obj, max_vocab=conf['max_vocab'])]
     return processor, tokenizer
@@ -42,27 +45,32 @@ def get_cached_data():
     if conf['use_cached_data_cls'] and os.path.exists(location):
         data_cls, data_test= pickle.load(open(location, 'rb'))
         print_data_cls_info(data_cls)
-        print_data_test_info(data_test)
+        if conf['test_on_cafa3_testset']:
+            print_data_test_info(data_test)
         return data_cls, data_test
     return None, None
 
 def get_hash_data_cache():
-    conf_str = (str(conf['bs']) + str(conf['val_bs']) +
-                str(conf['vocab_path']) + str(conf['classificiation_type']) +
-                str(conf['binary']) + str(conf['multiclass']) +
-                str(conf['use_sentencePiece']) +
-                str(conf['tokenizer_number_of_char']) +
-                str(conf['sequence_col_name']) +
-                str(conf['max_vocab']) +
-                str(conf['n_workers']) +
+    sep = ' '
+    conf_str = (str(conf['bs']) + sep + str(conf['val_bs']) + sep +
+                str(conf['vocab_path']) + sep + str(conf['classificiation_type']) + sep +
+                str(conf['binary']) + sep + str(conf['multiclass']) + sep +
+                str(conf['use_sentencePiece']) + sep +
+                str(conf['tokenizer_number_of_char']) + sep +
+                str(conf['predict_only_final_targets']) + sep +
+                str(conf['smaller_valid_df']) + sep +
+                str(conf['sequence_col_name']) + sep + str(conf['max_vocab']) + sep +
+                str(conf['n_workers']) + sep + str(conf['smaller_train_df']) + sep +
                 str(conf['valid_split_percentage']))
     conf_str = conf_str.encode('utf-8')
     hash_str = md5(conf_str).hexdigest()
     log.debug('cached data_class conf: ' + str(conf_str))
     log.debug('cached data_class hash: ' + hash_str)
     return hash_str
+
 def get_data_location():
     return conf['data_cached_location'] + get_hash_data_cache() + '.pickle'
+
 def save_data(data_cls, data_test):
     if conf['data_cached_location']:
         pickle.dump((data_cls, data_test), open(get_data_location(), 'wb'))
@@ -116,13 +124,15 @@ def create_databunch(train_df, valid_df, df_test):
 
     print_data_cls_info(data_cls)
 
+    if conf['test_on_cafa3_testset']:
+        data_test = (TextList.from_df(df_test, path=conf['local_project_path'], cols=conf['sequence_col_name'], processor=processor, vocab=data_cls.vocab)
+                    .split_none()
+                    .label_empty()
+                    .databunch(bs=conf['bs'], val_bs=conf['val_bs'], num_workers=conf['n_workers']))
 
-    data_test = (TextList.from_df(df_test, path=conf['local_project_path'], cols=conf['sequence_col_name'], processor=processor, vocab=data_cls.vocab)
-                .split_none()
-                .label_empty()
-                .databunch(bs=conf['bs'], val_bs=conf['val_bs'], num_workers=conf['n_workers']))
-
-    print_data_test_info(data_test)
+        print_data_test_info(data_test)
+    else:
+        data_test = None
 
     save_data(data_cls, data_test)
     save_vocab(data_cls)
