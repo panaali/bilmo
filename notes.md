@@ -21,7 +21,28 @@ cp -r ./data/cafa3/CAFA\ 3\ Benchmarks/benchmark20171115/* ./CAFA_assessment_too
 sshAurora2 -L 6006:localhost:6006
 
 Today:
-- add theasholdlessf1 per epoch
-- save Training and Validation as benchmark file
-- Create a callback for cafa_assesment  ... (will be run after training and validation,I hope to get perfect score after training!)
+- Clone cafa_assesment and make cafa_assesment importable
+- Save Training and Validation as benchmark file
+- Create a Callback for cafa_assesment  ... (will be run after training and validation,I hope to get perfect score after training!)
+
+- Add taxonomy to the cafa sequence (with ancestors)
+- Different Language Modeling
+
+- (I wish I run the language modeling for the proteinet sooner on the Pine) Q: tax ans? Hummm sentencePiece? No
+
+- positiveweight
+- loss without flattening
+- weight for loss
+
+openconnect --user=panahia --script-tun --script "~/ocproxy/ocproxy -L 2222:pine.cs.vcu.edu:22 -D 11080" ramsvpn.vcu.edu
+
+rsync -zavu -e "ssh -p2222 -i ~/.ssh/id_rsa3"  panahia@127.0.0.1:/home/panahia/projects/cafa/tensorboard-logs/ /home/panahia/projects/cafa/tensorboard-logs/
+
+rsync -zavu -e "ssh -p2222 -i ~/.ssh/id_rsa3" /home/panahia/projects/cafa/data/cafa3/  panahia@127.0.0.1:/home/panahia/projects/cafa/data/cafa3/
+
+
+mkdir /home/panahia/projects/cafa/log/
+mkdir ./data/sprot_lm/data_cls/
+
+
 
