@@ -2,31 +2,29 @@ from datetime import datetime
 
 class Config:
     conf = {
-        'gpu': 0,
+        'gpu': 1,
         'project_name': 'bilmo-cafa3',
-        'use_cached_data_cls': True,
+        'use_cached_data_cls': True, # change if error in loading
         'skip_training': False,
         'just_one_epoch': False,
-        'test_on_cafa3_testset': False,
+        'num_epochs': 20,
+        'test_on_cafa3_testset': True,
         # if have pretrained language model, put vocab and encoder name in here
-        'vocab_path': None,
-        # 'vocab_path': 'vocab_lm_sproat_seq_anc_tax.pickle',
-        'lm_encoder_path': None,
-        # 'lm_encoder_path': 'lm-sp-ans-v1-5-enc',
-        # `None` to use full training , 100 example
-        'smaller_train_df': 600,
-        # `None` to use full validation , 600 example
+        # 'vocab_path': None,
+        'vocab_path': 'vocab_lm_sproat_seq_anc_tax.pickle',
+        # 'lm_encoder_path': None,
+        'lm_encoder_path': 'lm-sp-ans-v1-5-enc',
+        # `None` to use full training ,  example: 100
+        'smaller_train_df': None,
+        # `None` to use full validation , example: 100
         'smaller_valid_df': None,
         # ok for protein centeric evaulation but not for term centeric I guess, otherwise it's 130K
         'predict_only_final_targets': True,
         # MultiLabelCrossEntropy, BCEWithLogitsFlat
         'loss_func': 'BCEWithLogitsFlat',
-        'log_level': 'DEBUG',
-        'log_path': './log/',
-        'datetime': f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}',
-        'data_path': './data/',
-        'bs': 4,
-        'val_bs': 8,
+        'loss_reduction': 'sum',  # for BCEWithLogitsFlat
+        'bs': 32,
+        'val_bs': 64,
         # multiprocess for dataloaders or tokenizer. 0 = no multiprocess
         'n_workers': 4,
         'fp16': False,
@@ -39,8 +37,7 @@ class Config:
             'max_sentence_len': 40000
         },
         # sum, mean, none
-        'loss_reduction': 'sum',
-        'weight_decay': 0.1,
+        'weight_decay': 0.05,  # if underfitting set as 0.01
         'training_dataframe_path':
         './data/cafa3/CAFA 3 Protein Targets/CAFA3_training_data/cafa_train_enhanced.p',
         'sequence_col_name': 'sequence',  # seq_tax (ToDo), seq_tax_anc
@@ -60,7 +57,7 @@ class Config:
         'OverSamplingCallback': False,  # doesn't work for multilabel
         'valid_split_percentage': 0.1,
         # my_AWD_LSTM, my_Transformer, my_TransformerXL
-        'network': 'my_Transformer',
+        'network': 'my_AWD_LSTM',
         'drop_mult': 1,
         'AWD_STM_config': {
             'emb_sz': 400,
@@ -117,17 +114,21 @@ class Config:
             'mem_len': 150,
             'mask': False
         },
-        'optimizer': 'adam',  # adam, radam
+        'optimizer': 'adam',  # adam, radam # radam seems not good for finetuning
         'random_seed': 42,
         'max_vocab': 60000,
-        'export_model': True,
+        'export_model': False, #doesn't work?
         'save_model': True,
         'add_tensorboard': True,
         'log_graph_tensorboard': False,
         'cafa_test_top_k_protein': 200,
         'cafa_test_top_k_classes': 200,
         'comet.ml': False,
-        'multiLabelF1_thresh': 0.20,  # just for our validation purpose
+        'multiLabelF1_thresh': 0.2,  # just for our validation purpose
+        'log_level': 'DEBUG',
+        'log_path': './log/',
+        'datetime': f'{datetime.now():%Y-%m-%d_%H-%M-%S%z}',
+        'data_path': './data/',
     }
     conf['log_filename']= conf['datetime']
     conf['local_project_path'] = conf['data_path'] + 'sprot_lm/'
