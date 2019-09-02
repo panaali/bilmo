@@ -1,5 +1,7 @@
 from bilmo.scripts.config import Config
 from fastai.basic_data import DatasetType
+from fastai.metrics import MultiLabelFbeta
+from bilmo.metrics.MultiLabelFbeta import MultiLabelFBetaMax
 import pandas as pd
 from goatools import obo_parser
 import logging
@@ -44,6 +46,11 @@ def write_result(uniq_ids, preds, path, prediction_classes):
 
 def test_cafa(data_test, learn_cls, df_test):
     learn_cls.data.add_test(data_test.train_ds)
+    learn_cls.callbacks = [
+        callback for callback in learn_cls.callbacks
+        if not isinstance(callback, MultiLabelFBetaMax)
+        and not isinstance(callback, MultiLabelFbeta)
+    ]
     preds, _ = learn_cls.get_preds(ds_type=DatasetType.Test, ordered=True)
 
     write_result(df_test.uniq_id, preds, conf['local_project_path'] +

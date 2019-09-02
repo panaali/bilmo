@@ -3,9 +3,11 @@ conf = Config.conf
 if conf['comet.ml']:
     from comet_ml import Experiment
 
-import torch
+import os
 if conf['gpu']:
-    torch.cuda.set_device(conf['gpu'])
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(conf['gpu'])
+    import torch
+    torch.cuda.set_device(0)
 
 from bilmo.scripts.initialize import initialize
 from bilmo.dataset.prepare_datasets_dataframe import load_data_train, load_data_test
@@ -25,8 +27,9 @@ def train_without_pretraining(learn_cls):
     learn_cls.fit_one_cycle(1, lr, moms=(0.8, 0.7))
 
     if not conf['just_one_epoch']:
-        learn_cls.fit_one_cycle(15, lr, moms=(0.8, 0.7))
-        learn_cls.save('cls-v1-0-' + conf['datetime'])
+        learn_cls.fit_one_cycle(conf['num_epochs'], lr, moms=(0.8, 0.7))
+        if conf['save_model']:
+            learn_cls.save('cls-v1-0-' + conf['datetime'])
 
         if conf['export_model']:
             learn_cls.export(file='export/' + 'export-cls-v1-4-' +
@@ -39,29 +42,35 @@ def train_with_pretraining(learn_cls):
     lr = 2e-2
     log.info('freeze')
     learn_cls.freeze()
-    learn_cls.fit_one_cycle(1, lr, moms=(0.8, 0.7))
+    learn_cls.fit_one_cycle(10, lr, moms=(0.8, 0.7))
 
     if not conf['just_one_epoch']:
-        learn_cls.fit_one_cycle(4, lr, moms=(0.8, 0.7))
-        #
-        learn_cls.save('cls-v1-0-' + conf['datetime'])
+        learn_cls.fit_one_cycle(10, lr, moms=(0.8, 0.7))
+        # learn_cls.save('cls-v1-0-' + conf['datetime'])
 
-        log.info('unfreeze')
+        log.info('unfreeze -2')
         learn_cls.freeze_to(-2)
-        learn_cls.fit_one_cycle(2, slice(lr/(2.6**4), lr), moms=(0.8, 0.7))
+        learn_cls.fit_one_cycle(10, slice(lr/(2.6**4), lr), moms=(0.8, 0.7))
         # learn_cls.save('cls-v1-1-' + conf['datetime'])
 
+        log.info('unfreeze -3')
         learn_cls.freeze_to(-3)
-        learn_cls.fit_one_cycle(2, slice(lr/2/(2.6**4), lr/2), moms=(0.8, 0.7))
+        learn_cls.fit_one_cycle(conf['num_epochs'],
+                                slice(lr / 2 / (2.6**4), lr / 2),
+                                moms=(0.8, 0.7))
         # learn_cls.save('cls-v1-2-' + conf['datetime'])
 
+        log.info('unfreeze')
         learn_cls.unfreeze()
-        learn_cls.fit_one_cycle(4, slice(lr/10/(2.6**4), lr/10), moms=(0.8, 0.7))
+        learn_cls.fit_one_cycle(10, slice(lr/10/(2.6**4), lr/10), moms=(0.8, 0.7))
         # learn_cls.save('cls-v1-3-' + conf['datetime'])
 
-        learn_cls.fit_one_cycle(20, slice(lr/10/(2.6**4), lr/10), moms=(0.8, 0.7))
-        learn_cls.save('cls-v1-4-' + conf['datetime'])
-        if conf['export_model']:
+        learn_cls.fit_one_cycle(10,
+                                slice(lr / 10 / (2.6**4), lr / 10),
+                                moms=(0.8, 0.7))
+        if conf['save_model']:
+            learn_cls.save('cls-v1-4-' + conf['datetime'])
+        if conf['export_model']: # doesn't work , should swap pickle with dill
             learn_cls.export(file = 'export/' + 'export-cls-v1-4-' + conf['datetime']+ '.pkl') # use hash of config
     else:
         log.info('just_one_epoch is True')
