@@ -75,14 +75,12 @@ def train_with_pretraining(learn_cls):
     else:
         log.info('just_one_epoch is True')
 
-
-
 if __name__ == "__main__":
     initialize()
     data_cls, data_test = get_cached_data()
     df_test = load_data_test() # needed for cafa3_testing at the end
     if data_cls is None:
-        log.info('No cached data found, loading data from df')
+        log.info('No cached data found or use_cached_data_cls is False, loading data from df')
         df_train, df_valid = load_data_train()
         data_cls, data_test = create_databunch(df_train, df_valid, df_test)
     learn_cls = create_learner(data_cls)
