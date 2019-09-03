@@ -7,6 +7,7 @@ class Config:
         'use_cached_data_cls': True, # change if error in loading
         'skip_training': False,
         'just_one_epoch': False,
+        'use_weight': True,
         'num_epochs': 20,
         'test_on_cafa3_testset': True,
         # if have pretrained language model, put vocab and encoder name in here
@@ -20,9 +21,9 @@ class Config:
         'smaller_valid_df': None,
         # ok for protein centeric evaulation but not for term centeric I guess, otherwise it's 130K
         'predict_only_final_targets': True,
-        # MultiLabelCrossEntropy, BCEWithLogitsFlat
-        'loss_func': 'BCEWithLogitsFlat',
-        'loss_reduction': 'sum',  # for BCEWithLogitsFlat
+        # MultiLabelCrossEntropy, BCEWithLogitsFlat, BCEWithLogitsLoss
+        'loss_func': 'BCEWithLogitsLoss',
+        'loss_reduction': 'mean',
         'bs': 32,
         'val_bs': 64,
         # multiprocess for dataloaders or tokenizer. 0 = no multiprocess

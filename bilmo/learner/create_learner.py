@@ -44,12 +44,10 @@ def append_callback_fns(learn_cls):
 
 
 def get_weights(data_cls):
-    labels = data_cls.train_dl.dataset.y.items
-    labels_flatten= [k for j in labels for k in j]
-    _, counts = np.unique(labels_flatten, return_counts=True)
-    weights = torch.FloatTensor((1 / counts))
-    weights = weights.expand(conf['bs'], -1).flatten().cuda() # bs is different for validation, this should be calculated inside the callback not here
-    return weights
+    if not conf['use_weight']:
+        return None
+    _, counts = np.unique(np.hstack(data_cls.y.items), return_counts=True)
+    return torch.FloatTensor((1 / counts)).cuda()
 
 def get_callback_fns():
     return [
@@ -59,17 +57,34 @@ def get_callback_fns():
         KillerCallback
     ]
 
-def get_loss_func():
+def get_loss_func(weight):
     if conf['loss_func'] == 'BCEWithLogitsFlat':
-        return BCEWithLogitsFlat(weight=None, reduction=conf['loss_reduction'])
+        return BCEWithLogitsFlat(weight=None, # weight should be broadcasted too, how I'm gonna do that in here?
+                                 reduction=conf['loss_reduction'],
+                                 size_average=None,
+                                 reduce=None,
+                                 pos_weight=None)
     elif conf['loss_func'] == 'MultiLabelCrossEntropy':
         # https://discuss.pytorch.org/t/how-should-i-implement-cross-entropy-loss-with-continuous-target-outputs/10720/17
-        def cross_entropy(pred, targ):
+        def cross_entropy(pred, targ, weight=None):
             softmax = nn.Softmax(dim=1)
-            soft_targets = softmax(targ)
             logsoftmax = nn.LogSoftmax(dim=1)
-            return torch.mean(torch.sum(- soft_targets * logsoftmax(pred), 1))
-        return cross_entropy
+            if conf['loss_reduction'] == 'mean':
+                op = torch.mean
+            elif conf['loss_reduction'] == 'sum':
+                op = torch.sum
+            else:
+                op = lambda x: x
+            if weight is not None:
+                return op(torch.sum(- softmax(targ) * logsoftmax(pred) * weight, 1))
+            return op(torch.sum(- softmax(targ) * logsoftmax(pred), 1))
+        return partial(cross_entropy, weight=weight)
+    elif conf['loss_func'] == 'BCEWithLogitsLoss':
+        return nn.BCEWithLogitsLoss(weight=weight,
+                                    reduction=conf['loss_reduction'],
+                                    size_average=None,
+                                    reduce=None,
+                                    pos_weight=None)
 
 
 
@@ -93,7 +108,7 @@ def create_learner(data_cls):
                                         eval(conf['network']),
                                         config=network_config,
                                         drop_mult=conf['drop_mult'],
-                                        loss_func=get_loss_func(),
+                                        loss_func=get_loss_func(weights),
                                         pretrained=False,
                                         opt_func=get_optimizer(),
                                         metrics=get_metrics(),
