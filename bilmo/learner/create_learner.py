@@ -10,6 +10,7 @@ from bilmo.optimizer.radam import RAdam
 from fastai.callback import AdamW
 from fastai.callbacks import OverSamplingCallback
 from bilmo.metrics.MultiLabelFbeta import addf1MultiLabel
+from bilmo.metrics.CafaAssesment import addCafaAssesment
 from fastai.callbacks.csv_logger import CSVLogger
 from fastai.layers import BCEWithLogitsFlat
 from fastai.text.learner import text_classifier_learner
@@ -41,11 +42,10 @@ def append_callback_fns(learn_cls):
         learn_cls.callbacks(OverSamplingCallback(learn_cls, weights=None))
     if conf['classificiation_type'] == 'multilabel':
         addf1MultiLabel(learn_cls)
+        addCafaAssesment(learn_cls)
 
 
 def get_weights(data_cls):
-    if not conf['use_weight']:
-        return None
     _, counts = np.unique(np.hstack(data_cls.y.items), return_counts=True)
     return torch.FloatTensor((1 / counts)).cuda()
 
@@ -58,15 +58,21 @@ def get_callback_fns():
     ]
 
 def get_loss_func(weight):
+        
+    pos_weight = None
+    if conf['use_pos_weight']:
+        pos_weight = (len(weight) - weight) / weight
+    if not conf['use_weight']:
+        weight = None
     if conf['loss_func'] == 'BCEWithLogitsFlat':
-        return BCEWithLogitsFlat(weight=None, # weight should be broadcasted too, how I'm gonna do that in here?
+        return BCEWithLogitsFlat(weight=None, # TODO: weight should be broadcasted too, how I'm gonna do that in here?
                                  reduction=conf['loss_reduction'],
                                  size_average=None,
                                  reduce=None,
-                                 pos_weight=None)
+                                 pos_weight=None) # TODO: pos_weight should be broadcasted too, how I'm gonna do that in here?
     elif conf['loss_func'] == 'MultiLabelCrossEntropy':
         # https://discuss.pytorch.org/t/how-should-i-implement-cross-entropy-loss-with-continuous-target-outputs/10720/17
-        def cross_entropy(pred, targ, weight=None):
+        def cross_entropy(pred, targ, weight=None): # TODO: can I add pos_weight in here too?
             softmax = nn.Softmax(dim=1)
             logsoftmax = nn.LogSoftmax(dim=1)
             if conf['loss_reduction'] == 'mean':
@@ -84,7 +90,7 @@ def get_loss_func(weight):
                                     reduction=conf['loss_reduction'],
                                     size_average=None,
                                     reduce=None,
-                                    pos_weight=None)
+                                    pos_weight=pos_weight)
 
 
 
