@@ -8,7 +8,7 @@ bak-tensorboard-logs/
 .idea
 .vscode
 *.code-workspace
-
+notes.md
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
